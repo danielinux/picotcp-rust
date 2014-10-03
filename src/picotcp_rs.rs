@@ -4,6 +4,8 @@ use libc::c_int;
 use libc::c_char;
 use std::mem::to_be32;
 use std::fmt;
+use std::io::Timer;
+use std::time::Duration;
 
 #[packed]
 pub struct pico_ip4 {
@@ -83,8 +85,10 @@ fn main() {
 
     println!("ip addr is {}", my_ip_addr);
 
+    let mut timer = Timer::new().unwrap();
     loop {
         unsafe { pico_stack_tick() };
+        timer.sleep(Duration::milliseconds(1));
     }
 
 }
