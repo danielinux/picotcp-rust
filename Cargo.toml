@@ -1,0 +1,9 @@
+[package]
+
+name = "picotcp_rs"
+version = "0.0.1"
+authors = [ "Maxime Vincent <maxime.vince@gmail.com>" ]
+
+[[bin]]
+
+name = "picotcp_rs"
