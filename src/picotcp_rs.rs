@@ -3,10 +3,23 @@ extern crate libc;
 use libc::c_int;
 use libc::c_char;
 use std::mem::to_be32;
+use std::fmt;
 
 #[packed]
 pub struct pico_ip4 {
     addr: u32,
+}
+
+impl fmt::Show for pico_ip4 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let addr = self.addr.to_be();
+        let a = (addr >> 24) & 0xFF;
+        let b = (addr >> 16) & 0xFF;
+        let c = (addr >> 8) & 0xFF;
+        let d = (addr) & 0xFF;
+
+        write!(f, " {}.{}.{}.{}", a,b,c,d)
+    }
 }
 
 /*
@@ -30,14 +43,18 @@ pub struct pico_device {
 */
 
 
+#[link(name = "devtun", kind="static")]
+extern {
+    fn pico_tun_create(name: *const c_char) -> *mut u32;
+}
+
 #[link(name = "picotcp", kind="static")]
 extern {
     //fn snappy_max_compressed_length(source_length: size_t) -> size_t;
     fn pico_stack_init() -> c_int;
     fn pico_stack_tick(); 
-    fn pico_tun_create(name: *const c_char) -> *mut u32;
     fn pico_string_to_ipv4(ipstr: *const c_char, ip: *mut pico_ip4);
-    fn pico_ipv4_link_add(dev: *mut u32, address: *mut pico_ip4, netmask: *mut pico_ip4);
+    fn pico_ipv4_link_add(dev: *mut u32, address: pico_ip4, netmask: pico_ip4);
 }
 
 fn main() {
@@ -61,10 +78,10 @@ fn main() {
     unsafe {
         pico_string_to_ipv4(ipaddr_cstr.as_ptr(), &mut my_ip_addr);
         pico_string_to_ipv4(netmask_cstr.as_ptr(), &mut my_netmask);
-        pico_ipv4_link_add(pico_dev_eth, &mut my_ip_addr as *mut pico_ip4, &mut my_netmask as *mut pico_ip4);
+        pico_ipv4_link_add(pico_dev_eth, my_ip_addr, my_netmask);
     }
 
-    println!("ip addr is {}", std::mem::from_be32(my_ip_addr.addr));
+    println!("ip addr is {}", my_ip_addr);
 
     loop {
         unsafe { pico_stack_tick() };
